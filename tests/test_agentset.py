@@ -58,6 +58,25 @@ class OtherAgentType(Agent):
         return self.unique_id
 
 
+def test_agentset_select_at_most_numpy_scalars():
+    """select(at_most=...) accepts NumPy numeric scalars, e.g. from model.rng (#4035)."""
+    model = Model(rng=42)
+    agentset = AgentSet([AgentTest(model) for _ in range(10)])
+
+    for n in (np.int64(3), np.int32(3), np.uint8(3)):
+        assert len(agentset.select(at_most=n)) == 3
+    for frac in (np.float32(0.5), np.float64(0.5)):
+        assert len(agentset.select(at_most=frac)) == 5
+    k = model.rng.integers(1, 5)
+    assert len(agentset.select(at_most=k)) == k
+
+    with pytest.raises(TypeError, match="must be an integer or float"):
+        agentset.select(at_most=np.bool_(True))
+    for bad in (np.int64(-1), np.float32(1.5), np.float64(0.0)):
+        with pytest.raises(ValueError):
+            agentset.select(at_most=bad)
+
+
 def test_agentset():
     """Test agentset class."""
     # create agentset

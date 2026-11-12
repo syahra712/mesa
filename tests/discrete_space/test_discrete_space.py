@@ -824,6 +824,23 @@ def test_is_empty_no_list_copy():
     assert agents_copy is not internal_list
 
 
+def test_cell_collection_select_at_most_numpy_scalars():
+    """CellCollection.select(at_most=...) accepts NumPy numeric scalars (#4035)."""
+    rng = random.Random(42)
+    collection = CellCollection([Cell((i,), random=rng) for i in range(10)], random=rng)
+
+    for n in (np.int64(3), np.int32(3)):
+        assert len(collection.select(at_most=n)) == 3
+    for frac in (np.float32(0.5), np.float64(0.5)):
+        assert len(collection.select(at_most=frac)) == 5
+
+    with pytest.raises(TypeError, match="must be an integer or float"):
+        collection.select(at_most=np.bool_(True))
+    for bad in (np.int64(-1), np.float32(1.5)):
+        with pytest.raises(ValueError):
+            collection.select(at_most=bad)
+
+
 def test_cell_collection():
     """Test CellCollection."""
     cell1 = Cell((1,), capacity=None, random=random.Random())
